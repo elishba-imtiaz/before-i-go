@@ -1,0 +1,625 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Before I Go — Farewell Notes</title>
+<link href="https://fonts.googleapis.com/css2?family=Dancing+Script:wght@700&family=Courier+Prime:ital,wght@0,400;0,700;1,400&family=Lato:wght@300;400;700&display=swap" rel="stylesheet">
+<script src="https://accounts.google.com/gsi/client" async defer></script>
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+:root {
+  --coral: #e8836a;
+  --coral-dark: #c96a52;
+  --pink-frame: #f0a8b8;
+  --cream: #fdf6ec;
+  --brown: #6b3a2a;
+  --berkeley-blue: #003262;
+  --gold: #fdb515;
+  --text-dark: #2a1a0e;
+  --gingham-white: #ddeef7;
+}
+
+body {
+  font-family: 'Lato', sans-serif;
+  background: #eef2f7;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 2rem 1rem 4rem;
+}
+
+.site-header {
+  width: 100%; max-width: 1100px;
+  display: flex; align-items: flex-start; justify-content: space-between;
+  margin-bottom: 2.5rem;
+}
+.app-title { font-family: 'Dancing Script', cursive; font-size: 2.4rem; color: var(--berkeley-blue); }
+.app-subtitle { font-family: 'Courier Prime', monospace; font-size: 0.7rem; color: #aaa; letter-spacing: 0.12em; text-transform: uppercase; margin-top: 2px; }
+
+.google-signin-wrap { display: flex; flex-direction: column; align-items: flex-end; gap: 5px; padding-top: 6px; }
+.signin-status { font-family: 'Courier Prime', monospace; font-size: 0.7rem; color: #aaa; }
+.signin-status.connected { color: #3b9c5a; }
+.signout-btn { background: none; border: none; cursor: pointer; font-family: 'Courier Prime', monospace; font-size: 0.68rem; color: #bbb; text-decoration: underline; }
+.signout-btn:hover { color: var(--coral); }
+
+.app-layout {
+  display: grid; grid-template-columns: 400px 1fr;
+  gap: 2rem; width: 100%; max-width: 1100px; align-items: start;
+}
+
+/* PANEL */
+.panel { background: white; border-radius: 18px; padding: 1.6rem; box-shadow: 0 2px 24px rgba(0,0,0,0.07); }
+.panel-section { margin-bottom: 1.4rem; }
+.panel-section:last-child { margin-bottom: 0; }
+.section-label { font-family: 'Courier Prime', monospace; font-size: 0.66rem; letter-spacing: 0.12em; text-transform: uppercase; color: #bbb; margin-bottom: 0.5rem; }
+
+input[type="text"], input[type="email"], input[type="password"], textarea {
+  width: 100%; border: 1.5px solid #ebebeb; border-radius: 9px;
+  padding: 9px 12px; font-family: 'Lato', sans-serif; font-size: 0.9rem;
+  color: var(--text-dark); background: #fafafa; outline: none; transition: border-color 0.2s, background 0.2s;
+}
+input:focus, textarea:focus { border-color: var(--coral); background: white; }
+
+/* AUTOCOMPLETE */
+.contact-field { position: relative; }
+.contact-suggestions {
+  position: absolute; top: calc(100% + 4px); left: 0; right: 0;
+  background: white; border: 1.5px solid #ebebeb; border-radius: 10px;
+  box-shadow: 0 8px 24px rgba(0,0,0,0.1); z-index: 100;
+  max-height: 220px; overflow-y: auto; display: none;
+}
+.contact-suggestions.open { display: block; }
+.suggestion-item { padding: 9px 14px; cursor: pointer; display: flex; align-items: center; gap: 10px; transition: background 0.15s; }
+.suggestion-item:hover, .suggestion-item.active { background: #fdf6f4; }
+.suggestion-avatar { width: 30px; height: 30px; border-radius: 50%; background: var(--berkeley-blue); color: white; display: flex; align-items: center; justify-content: center; font-size: 0.68rem; font-weight: 700; flex-shrink: 0; }
+.suggestion-name { font-size: 0.85rem; color: var(--text-dark); font-weight: 600; display: block; }
+.suggestion-email { font-size: 0.73rem; color: #aaa; font-family: 'Courier Prime', monospace; display: block; }
+.no-google-hint { padding: 10px 14px; font-family: 'Courier Prime', monospace; font-size: 0.72rem; color: #bbb; }
+.selected-contact { margin-top: 7px; font-family: 'Courier Prime', monospace; font-size: 0.73rem; color: #aaa; display: flex; align-items: center; gap: 6px; }
+.clear-contact { background: none; border: none; cursor: pointer; color: var(--coral); font-size: 0.73rem; }
+
+/* TEXTAREA + MIC */
+.textarea-wrap { position: relative; }
+.textarea-wrap textarea { padding-right: 44px; min-height: 130px; resize: vertical; line-height: 1.65; }
+.mic-btn-inline {
+  position: absolute; right: 10px; bottom: 10px;
+  width: 30px; height: 30px; border-radius: 50%;
+  border: 1.5px solid #e0e0e0; background: white;
+  cursor: pointer; display: flex; align-items: center; justify-content: center; transition: all 0.2s;
+}
+.mic-btn-inline:hover { border-color: var(--coral); }
+.mic-btn-inline.recording { border-color: #e24b4b; background: #fff5f5; animation: pulse 1s infinite; }
+@keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.55} }
+
+/* API KEY */
+.api-key-row { display: flex; align-items: center; gap: 8px; }
+.api-key-row input { flex: 1; font-size: 0.8rem; }
+.key-toggle { background: none; border: none; cursor: pointer; color: #bbb; font-size: 0.72rem; white-space: nowrap; font-family: 'Courier Prime', monospace; }
+.key-toggle:hover { color: var(--coral); }
+.key-hint { font-size: 0.67rem; color: #ccc; font-family: 'Courier Prime', monospace; margin-top: 4px; }
+
+/* PHOTO */
+.input-row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.photo-upload { border: 2px dashed #e8e8e8; border-radius: 10px; padding: 10px; text-align: center; cursor: pointer; transition: border-color 0.2s; position: relative; min-height: 44px; display: flex; align-items: center; justify-content: center; }
+.photo-upload:hover { border-color: var(--coral); }
+.photo-upload input { position: absolute; inset: 0; opacity: 0; cursor: pointer; width: 100%; }
+.photo-upload-text { font-size: 0.76rem; color: #ccc; font-family: 'Courier Prime', monospace; }
+.photo-preview { width: 100%; height: 60px; object-fit: cover; border-radius: 6px; display: none; }
+
+/* BUTTONS */
+.btn-row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 10px; }
+.btn-polish {
+  background: var(--coral); color: white; border: none; border-radius: 10px;
+  padding: 13px 8px; font-family: 'Dancing Script', cursive; font-size: 1.2rem;
+  cursor: pointer; transition: background 0.2s, transform 0.1s; text-align: center;
+}
+.btn-polish:hover { background: var(--coral-dark); }
+.btn-polish:active { transform: scale(0.98); }
+.btn-polish:disabled { background: #ddd; cursor: not-allowed; }
+.btn-send-raw {
+  background: white; color: var(--berkeley-blue); border: 1.5px solid var(--berkeley-blue);
+  border-radius: 10px; padding: 13px 8px; font-family: 'Courier Prime', monospace;
+  font-size: 0.8rem; cursor: pointer; transition: all 0.2s; text-align: center;
+}
+.btn-send-raw:hover { background: var(--berkeley-blue); color: white; }
+
+.action-row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 10px; }
+.action-btn { border: 1.5px solid #e8e8e8; background: white; border-radius: 10px; padding: 10px; font-family: 'Courier Prime', monospace; font-size: 0.74rem; cursor: pointer; color: #666; transition: all 0.2s; text-align: center; }
+.action-btn:hover { border-color: var(--coral); color: var(--coral); }
+.action-btn.gmail { background: var(--berkeley-blue); color: white; border-color: var(--berkeley-blue); }
+.action-btn.gmail:hover { background: #00264d; }
+
+.status-msg { font-family: 'Courier Prime', monospace; font-size: 0.71rem; color: #bbb; text-align: center; margin-top: 8px; min-height: 1.1rem; }
+.status-msg.error { color: #e24b4b; }
+.status-msg.success { color: #3b9c5a; }
+
+/* POSTCARD */
+.postcard-wrap { position: relative; width: 100%; }
+.postcard-outer {
+  position: relative; border-radius: 20px; overflow: hidden; padding: 28px;
+  background-color: var(--gingham-white);
+  background-image:
+    repeating-linear-gradient(0deg, transparent, transparent 28px, rgba(100,160,210,0.22) 28px, rgba(100,160,210,0.22) 56px),
+    repeating-linear-gradient(90deg, transparent, transparent 28px, rgba(100,160,210,0.22) 28px, rgba(100,160,210,0.22) 56px);
+  box-shadow: 0 6px 48px rgba(0,0,0,0.13); min-height: 540px;
+}
+
+.bear { position: absolute; width: 52px; height: 52px; }
+.bear-tl { top: 8px; left: 8px; transform: rotate(-8deg); }
+.bear-bl { bottom: 8px; left: 8px; transform: rotate(6deg); }
+.bear-br { bottom: 8px; right: 8px; transform: scaleX(-1) rotate(6deg); }
+.bear-ml { top: 42%; left: 8px; transform: rotate(-4deg); }
+.bear-mr { top: 42%; right: 8px; transform: scaleX(-1) rotate(-4deg); }
+
+.campanile-wrap { position: absolute; top: 4px; right: 8px; width: 82px; height: 155px; z-index: 10; }
+.campanile-svg { width: 82px; height: 155px; }
+
+.browser { position: relative; border-radius: 14px; overflow: hidden; box-shadow: 0 8px 40px rgba(0,0,0,0.22); }
+.browser-chrome { background: var(--coral); padding: 10px 14px 0; display: flex; flex-direction: column; gap: 8px; }
+.browser-dots { display: flex; gap: 6px; align-items: center; }
+.dot { width: 12px; height: 12px; border-radius: 50%; }
+.dot.red { background: #ff5f57; } .dot.yellow { background: #febc2e; } .dot.green { background: #28c840; }
+.browser-urlbar { background: var(--pink-frame); border-radius: 8px 8px 0 0; display: flex; align-items: center; gap: 8px; padding: 6px 12px; }
+.urlbar-arrows { font-size: 0.75rem; color: rgba(255,255,255,0.7); font-family: 'Courier Prime', monospace; }
+.urlbar-text { flex: 1; background: rgba(255,255,255,0.35); border-radius: 10px; padding: 3px 10px; font-family: 'Courier Prime', monospace; font-size: 0.72rem; color: white; display: flex; align-items: center; gap: 5px; }
+.urlbar-dot { width: 6px; height: 6px; border-radius: 50%; background: rgba(255,255,255,0.6); }
+.browser-body { background: var(--cream); padding: 1.6rem 1.8rem 1.8rem; position: relative; min-height: 280px; }
+.browser-bg-photo { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; opacity: 0.12; display: none; }
+.postcard-heading { font-family: 'Dancing Script', cursive; font-size: 2.6rem; color: var(--brown); margin-bottom: 1.2rem; }
+.postcard-message { font-family: 'Courier Prime', monospace; font-size: 0.9rem; color: var(--text-dark); line-height: 1.8; min-height: 90px; }
+.postcard-message.empty { color: #ccc; font-style: italic; }
+.postcard-footer { display: flex; justify-content: space-between; align-items: flex-end; margin-top: 1.6rem; }
+.postcard-signoff { font-family: 'Dancing Script', cursive; font-size: 1.4rem; color: var(--brown); }
+
+.shimmer { background: linear-gradient(90deg, #f0ede8 25%, #e8e4de 50%, #f0ede8 75%); background-size: 200% 100%; animation: shimmer 1.4s infinite; border-radius: 4px; height: 14px; margin-bottom: 9px; }
+@keyframes shimmer { 0%{background-position:200% 0} 100%{background-position:-200% 0} }
+
+@media (max-width: 860px) { .app-layout { grid-template-columns: 1fr; } .site-header { flex-direction: column; gap: 12px; } }
+</style>
+</head>
+<body>
+
+<div class="site-header">
+  <div>
+    <div class="app-title">before I go</div>
+    <div class="app-subtitle">farewell notes · notes.from.berkeley</div>
+  </div>
+  <div class="google-signin-wrap">
+    <div id="googleSigninBtn"></div>
+    <div class="signin-status" id="signinStatus">sign in to search your Gmail contacts</div>
+    <button class="signout-btn" id="signoutBtn" style="display:none" onclick="signOut()">sign out</button>
+  </div>
+</div>
+
+<div class="app-layout">
+
+  <!-- LEFT PANEL -->
+  <div class="panel">
+
+    <div class="panel-section">
+      <div class="section-label">Anthropic API Key</div>
+      <div class="api-key-row">
+        <input type="password" id="apiKey" placeholder="sk-ant-..." autocomplete="off">
+        <button class="key-toggle" onclick="toggleKey()">show</button>
+      </div>
+      <div class="key-hint">get yours free at console.anthropic.com</div>
+    </div>
+
+    <div class="panel-section">
+      <div class="section-label">To — search your contacts</div>
+      <div class="contact-field">
+        <input type="text" id="contactSearch" placeholder="start typing a name or email..."
+          autocomplete="off" oninput="onContactInput()" onkeydown="onContactKey(event)">
+        <div class="contact-suggestions" id="suggestions"></div>
+      </div>
+      <input type="hidden" id="recipientName">
+      <input type="hidden" id="recipientEmail">
+      <div class="selected-contact" id="selectedContact" style="display:none">
+        <span id="selectedContactText"></span>
+        <button class="clear-contact" onclick="clearContact()">✕</button>
+      </div>
+    </div>
+
+    <div class="panel-section">
+      <div class="section-label">Your note — type or tap the mic</div>
+      <div class="textarea-wrap">
+        <textarea id="rawNote" placeholder="okay so like... we stayed up until 3am before finals eating chips and she kept making me laugh and i never would have passed without her..."></textarea>
+        <button class="mic-btn-inline" id="micBtn" onclick="toggleMic()" title="tap to speak">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+            <rect x="9" y="2" width="6" height="11" rx="3"/>
+            <path d="M5 10a7 7 0 0 0 14 0"/>
+            <line x1="12" y1="17" x2="12" y2="21"/>
+            <line x1="9" y1="21" x2="15" y2="21"/>
+          </svg>
+        </button>
+      </div>
+    </div>
+
+    <div class="panel-section">
+      <div class="input-row">
+        <div>
+          <div class="section-label">Sign-off name</div>
+          <input type="text" id="signoffName" placeholder="Elishba" value="Elishba" oninput="updateSignoff()">
+        </div>
+        <div>
+          <div class="section-label">Berkeley photo</div>
+          <div class="photo-upload">
+            <input type="file" id="photoInput" accept="image/*" onchange="handlePhoto(event)">
+            <img id="photoPreview" class="photo-preview" alt="">
+            <div class="photo-upload-text" id="photoUploadText">+ photo</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="btn-row">
+      <button class="btn-polish" id="generateBtn" onclick="generate()">✦ polish with Claude</button>
+      <button class="btn-send-raw" onclick="sendRaw()">send as is →</button>
+    </div>
+
+    <div class="action-row" id="actionRow" style="display:none">
+      <button class="action-btn gmail" onclick="sendGmail()">send via Gmail</button>
+      <button class="action-btn" onclick="copyPlain()">copy for WhatsApp</button>
+    </div>
+
+    <div class="status-msg" id="statusMsg"></div>
+  </div>
+
+  <!-- POSTCARD -->
+  <div class="postcard-wrap">
+    <div class="postcard-outer">
+
+      <!-- Bears -->
+      <svg class="bear bear-tl" viewBox="0 0 100 90" xmlns="http://www.w3.org/2000/svg"><g fill="#6b3a2a"><circle cx="30" cy="28" r="14"/><circle cx="70" cy="28" r="14"/><circle cx="30" cy="28" r="9" fill="#a0674a"/><circle cx="70" cy="28" r="9" fill="#a0674a"/><ellipse cx="50" cy="55" rx="34" ry="32"/><ellipse cx="50" cy="62" rx="18" ry="14" fill="#a0674a"/><circle cx="38" cy="48" r="5" fill="#1a0a00"/><circle cx="62" cy="48" r="5" fill="#1a0a00"/><circle cx="39.5" cy="46.5" r="1.5" fill="white"/><circle cx="63.5" cy="46.5" r="1.5" fill="white"/><ellipse cx="50" cy="60" rx="6" ry="4" fill="#1a0a00"/><path d="M44 65 Q50 72 56 65" stroke="#1a0a00" stroke-width="1.5" fill="none" stroke-linecap="round"/></g></svg>
+      <svg class="bear bear-ml" viewBox="0 0 100 90" xmlns="http://www.w3.org/2000/svg"><g fill="#6b3a2a"><circle cx="30" cy="28" r="14"/><circle cx="70" cy="28" r="14"/><circle cx="30" cy="28" r="9" fill="#a0674a"/><circle cx="70" cy="28" r="9" fill="#a0674a"/><ellipse cx="50" cy="55" rx="34" ry="32"/><ellipse cx="50" cy="62" rx="18" ry="14" fill="#a0674a"/><circle cx="38" cy="48" r="5" fill="#1a0a00"/><circle cx="62" cy="48" r="5" fill="#1a0a00"/><circle cx="39.5" cy="46.5" r="1.5" fill="white"/><circle cx="63.5" cy="46.5" r="1.5" fill="white"/><ellipse cx="50" cy="60" rx="6" ry="4" fill="#1a0a00"/><path d="M44 65 Q50 72 56 65" stroke="#1a0a00" stroke-width="1.5" fill="none" stroke-linecap="round"/></g></svg>
+      <svg class="bear bear-mr" viewBox="0 0 100 90" xmlns="http://www.w3.org/2000/svg"><g fill="#6b3a2a"><circle cx="30" cy="28" r="14"/><circle cx="70" cy="28" r="14"/><circle cx="30" cy="28" r="9" fill="#a0674a"/><circle cx="70" cy="28" r="9" fill="#a0674a"/><ellipse cx="50" cy="55" rx="34" ry="32"/><ellipse cx="50" cy="62" rx="18" ry="14" fill="#a0674a"/><circle cx="38" cy="48" r="5" fill="#1a0a00"/><circle cx="62" cy="48" r="5" fill="#1a0a00"/><circle cx="39.5" cy="46.5" r="1.5" fill="white"/><circle cx="63.5" cy="46.5" r="1.5" fill="white"/><ellipse cx="50" cy="60" rx="6" ry="4" fill="#1a0a00"/><path d="M44 65 Q50 72 56 65" stroke="#1a0a00" stroke-width="1.5" fill="none" stroke-linecap="round"/></g></svg>
+      <svg class="bear bear-bl" viewBox="0 0 100 90" xmlns="http://www.w3.org/2000/svg"><g fill="#6b3a2a"><circle cx="30" cy="28" r="14"/><circle cx="70" cy="28" r="14"/><circle cx="30" cy="28" r="9" fill="#a0674a"/><circle cx="70" cy="28" r="9" fill="#a0674a"/><ellipse cx="50" cy="55" rx="34" ry="32"/><ellipse cx="50" cy="62" rx="18" ry="14" fill="#a0674a"/><circle cx="38" cy="48" r="5" fill="#1a0a00"/><circle cx="62" cy="48" r="5" fill="#1a0a00"/><circle cx="39.5" cy="46.5" r="1.5" fill="white"/><circle cx="63.5" cy="46.5" r="1.5" fill="white"/><ellipse cx="50" cy="60" rx="6" ry="4" fill="#1a0a00"/><path d="M44 65 Q50 72 56 65" stroke="#1a0a00" stroke-width="1.5" fill="none" stroke-linecap="round"/></g></svg>
+      <svg class="bear bear-br" viewBox="0 0 100 90" xmlns="http://www.w3.org/2000/svg"><g fill="#6b3a2a"><circle cx="30" cy="28" r="14"/><circle cx="70" cy="28" r="14"/><circle cx="30" cy="28" r="9" fill="#a0674a"/><circle cx="70" cy="28" r="9" fill="#a0674a"/><ellipse cx="50" cy="55" rx="34" ry="32"/><ellipse cx="50" cy="62" rx="18" ry="14" fill="#a0674a"/><circle cx="38" cy="48" r="5" fill="#1a0a00"/><circle cx="62" cy="48" r="5" fill="#1a0a00"/><circle cx="39.5" cy="46.5" r="1.5" fill="white"/><circle cx="63.5" cy="46.5" r="1.5" fill="white"/><ellipse cx="50" cy="60" rx="6" ry="4" fill="#1a0a00"/><path d="M44 65 Q50 72 56 65" stroke="#1a0a00" stroke-width="1.5" fill="none" stroke-linecap="round"/></g></svg>
+
+      <!-- Campanile -->
+      <div class="campanile-wrap">
+        <svg class="campanile-svg" viewBox="0 0 60 110" xmlns="http://www.w3.org/2000/svg">
+          <polygon points="30,2 26,18 34,18" fill="#d6d0c8"/>
+          <rect x="27.5" y="14" width="5" height="10" fill="#d6d0c8"/>
+          <rect x="23" y="23" width="14" height="3" fill="#b8b0a4" rx="0.5"/>
+          <rect x="20" y="26" width="20" height="18" fill="#e8e4dc" stroke="#c8c0b8" stroke-width="0.5"/>
+          <path d="M22 42 L22 33 Q22 29 25.5 29 Q29 29 29 33 L29 42 Z" fill="#ccc8c0"/>
+          <path d="M31 42 L31 33 Q31 29 34.5 29 Q38 29 38 33 L38 42 Z" fill="#ccc8c0"/>
+          <rect x="20" y="26" width="2.5" height="18" fill="#d0c8c0"/>
+          <rect x="37.5" y="26" width="2.5" height="18" fill="#d0c8c0"/>
+          <rect x="18" y="25" width="24" height="3" fill="#b8b0a4" rx="0.5"/>
+          <rect x="18" y="43" width="24" height="2.5" fill="#b8b0a4" rx="0.5"/>
+          <rect x="22" y="45.5" width="16" height="14" fill="#e8e4dc" stroke="#c8c0b8" stroke-width="0.5"/>
+          <circle cx="30" cy="52.5" r="5.5" fill="white" stroke="#a8a09a" stroke-width="0.8"/>
+          <line x1="30" y1="47.5" x2="30" y2="48.8" stroke="#888" stroke-width="0.8"/>
+          <line x1="30" y1="57.2" x2="30" y2="58.5" stroke="#888" stroke-width="0.8"/>
+          <line x1="25" y1="52.5" x2="26.3" y2="52.5" stroke="#888" stroke-width="0.8"/>
+          <line x1="33.7" y1="52.5" x2="35" y2="52.5" stroke="#888" stroke-width="0.8"/>
+          <circle cx="30" cy="52.5" r="0.8" fill="#555"/>
+          <line x1="30" y1="52.5" x2="27.2" y2="49.2" stroke="#444" stroke-width="1" stroke-linecap="round"/>
+          <line x1="30" y1="52.5" x2="32.8" y2="49.2" stroke="#666" stroke-width="0.8" stroke-linecap="round"/>
+          <rect x="20" y="59" width="20" height="2" fill="#b8b0a4" rx="0.5"/>
+          <rect x="23" y="61" width="14" height="34" fill="#e4e0d8" stroke="#c8c0b8" stroke-width="0.5"/>
+          <line x1="26" y1="61" x2="26" y2="95" stroke="#d0c8c0" stroke-width="0.6"/>
+          <line x1="34" y1="61" x2="34" y2="95" stroke="#d0c8c0" stroke-width="0.6"/>
+          <rect x="23" y="61" width="2" height="34" fill="#dcd8d0"/>
+          <rect x="35" y="61" width="2" height="34" fill="#dcd8d0"/>
+          <rect x="26.5" y="65" width="3" height="6" fill="#c8c8c0" rx="1"/>
+          <rect x="30.5" y="65" width="3" height="6" fill="#c8c8c0" rx="1"/>
+          <rect x="26.5" y="76" width="3" height="6" fill="#c8c8c0" rx="1"/>
+          <rect x="30.5" y="76" width="3" height="6" fill="#c8c8c0" rx="1"/>
+          <rect x="21" y="95" width="18" height="5" fill="#d8d4cc" stroke="#c0b8b0" stroke-width="0.5"/>
+          <path d="M27 100 L27 97 Q27 95 30 95 Q33 95 33 97 L33 100 Z" fill="#bbb8b0"/>
+          <rect x="19" y="100" width="22" height="3" fill="#c8c4bc" rx="0.5"/>
+          <rect x="17" y="103" width="26" height="2.5" fill="#b8b4ac" rx="0.5"/>
+        </svg>
+      </div>
+
+      <!-- Browser -->
+      <div class="browser">
+        <div class="browser-chrome">
+          <div class="browser-dots">
+            <div class="dot red"></div><div class="dot yellow"></div><div class="dot green"></div>
+          </div>
+          <div class="browser-urlbar">
+            <span class="urlbar-arrows">← → ↺</span>
+            <div class="urlbar-text"><div class="urlbar-dot"></div>notes.from.berkeley</div>
+          </div>
+        </div>
+        <div class="browser-body">
+          <img id="browserBgPhoto" class="browser-bg-photo" alt="">
+          <div class="postcard-heading">before I go</div>
+          <div class="postcard-message empty" id="postcardMessage">your polished note will appear here...</div>
+          <div class="postcard-footer">
+            <div class="postcard-signoff" id="postcardSignoff">— Elishba</div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<script>
+const GOOGLE_CLIENT_ID = '236174250300-nronp2k6v1818kptfcm4s05btophllc5.apps.googleusercontent.com';
+let accessToken = null;
+let allContacts = [];
+let currentMatches = [];
+let selectedIdx = -1;
+let generatedMessage = '';
+let isRecording = false;
+let recognition = null;
+
+// ── GOOGLE SIGN IN ──
+window.addEventListener('load', () => {
+  const tryInit = () => {
+    if (typeof google !== 'undefined' && google.accounts) initGoogle();
+    else setTimeout(tryInit, 300);
+  };
+  tryInit();
+});
+
+function initGoogle() {
+  google.accounts.id.initialize({ client_id: GOOGLE_CLIENT_ID, callback: () => {} });
+  google.accounts.id.renderButton(document.getElementById('googleSigninBtn'), {
+    theme: 'outline', size: 'medium', text: 'signin_with', shape: 'pill'
+  });
+  window.tokenClient = google.accounts.oauth2.initTokenClient({
+    client_id: GOOGLE_CLIENT_ID,
+    scope: 'https://www.googleapis.com/auth/contacts.readonly',
+    callback: handleTokenResponse
+  });
+  // Override button click to use token flow
+  document.getElementById('googleSigninBtn').addEventListener('click', () => {
+    window.tokenClient.requestAccessToken({ prompt: 'consent' });
+  }, true);
+}
+
+function handleTokenResponse(resp) {
+  if (resp.error) { setStatus('Google sign-in failed', 'error'); return; }
+  accessToken = resp.access_token;
+  document.getElementById('signinStatus').textContent = '✓ connected — loading contacts...';
+  document.getElementById('signinStatus').className = 'signin-status connected';
+  document.getElementById('signoutBtn').style.display = 'inline';
+  loadContacts();
+}
+
+function signOut() {
+  if (accessToken) google.accounts.oauth2.revoke(accessToken, () => {});
+  accessToken = null; allContacts = [];
+  document.getElementById('signinStatus').textContent = 'sign in to search your Gmail contacts';
+  document.getElementById('signinStatus').className = 'signin-status';
+  document.getElementById('signoutBtn').style.display = 'none';
+}
+
+async function loadContacts() {
+  try {
+    let contacts = [], pageToken = '';
+    do {
+      const url = `https://people.googleapis.com/v1/people/me/connections?personFields=names,emailAddresses&pageSize=1000${pageToken ? '&pageToken=' + pageToken : ''}`;
+      const res = await fetch(url, { headers: { Authorization: `Bearer ${accessToken}` } });
+      const data = await res.json();
+      (data.connections || []).forEach(p => {
+        const name = p.names?.[0]?.displayName || '';
+        const email = p.emailAddresses?.[0]?.value || '';
+        if (name && email) contacts.push({ name, email });
+      });
+      pageToken = data.nextPageToken || '';
+    } while (pageToken);
+    allContacts = contacts;
+    document.getElementById('signinStatus').textContent = `✓ ${contacts.length} contacts ready`;
+  } catch(e) {
+    document.getElementById('signinStatus').textContent = 'could not load contacts';
+  }
+}
+
+// ── AUTOCOMPLETE ──
+function onContactInput() {
+  const q = document.getElementById('contactSearch').value.trim().toLowerCase();
+  const box = document.getElementById('suggestions');
+  selectedIdx = -1;
+
+  if (!q) { box.classList.remove('open'); box.innerHTML = ''; return; }
+
+  if (allContacts.length === 0) {
+    box.innerHTML = `<div class="no-google-hint">sign in with Google above to search contacts — or just type an email directly</div>`;
+    box.classList.add('open');
+    return;
+  }
+
+  currentMatches = allContacts.filter(c =>
+    c.name.toLowerCase().includes(q) || c.email.toLowerCase().includes(q)
+  ).slice(0, 8);
+
+  if (currentMatches.length === 0) { box.classList.remove('open'); return; }
+
+  box.innerHTML = currentMatches.map((c, i) => {
+    const initials = c.name.split(' ').map(w => w[0]).filter(Boolean).join('').slice(0,2).toUpperCase();
+    return `<div class="suggestion-item" data-i="${i}" onmousedown="selectContact(${i})">
+      <div class="suggestion-avatar">${initials}</div>
+      <div><span class="suggestion-name">${highlight(c.name, q)}</span><span class="suggestion-email">${c.email}</span></div>
+    </div>`;
+  }).join('');
+  box.classList.add('open');
+}
+
+function highlight(text, q) {
+  const i = text.toLowerCase().indexOf(q);
+  if (i < 0) return text;
+  return text.slice(0,i) + '<strong>' + text.slice(i, i+q.length) + '</strong>' + text.slice(i+q.length);
+}
+
+function onContactKey(e) {
+  const box = document.getElementById('suggestions');
+  if (!box.classList.contains('open')) return;
+  const items = box.querySelectorAll('.suggestion-item');
+  if (e.key === 'ArrowDown') { e.preventDefault(); selectedIdx = Math.min(selectedIdx+1, items.length-1); }
+  else if (e.key === 'ArrowUp') { e.preventDefault(); selectedIdx = Math.max(selectedIdx-1, 0); }
+  else if (e.key === 'Enter' && selectedIdx >= 0) { e.preventDefault(); selectContact(selectedIdx); return; }
+  else if (e.key === 'Escape') { box.classList.remove('open'); return; }
+  items.forEach((el, i) => el.classList.toggle('active', i === selectedIdx));
+}
+
+function selectContact(i) {
+  const c = currentMatches[i];
+  document.getElementById('contactSearch').value = c.name;
+  document.getElementById('recipientName').value = c.name;
+  document.getElementById('recipientEmail').value = c.email;
+  document.getElementById('selectedContactText').textContent = `${c.name} · ${c.email}`;
+  document.getElementById('selectedContact').style.display = 'flex';
+  document.getElementById('suggestions').classList.remove('open');
+}
+
+function clearContact() {
+  document.getElementById('contactSearch').value = '';
+  document.getElementById('recipientName').value = '';
+  document.getElementById('recipientEmail').value = '';
+  document.getElementById('selectedContact').style.display = 'none';
+}
+
+document.addEventListener('click', e => {
+  if (!e.target.closest('.contact-field')) document.getElementById('suggestions').classList.remove('open');
+});
+
+// ── HELPERS ──
+function updateSignoff() {
+  const n = document.getElementById('signoffName').value.trim() || 'Elishba';
+  document.getElementById('postcardSignoff').textContent = '— ' + n;
+}
+function toggleKey() {
+  const k = document.getElementById('apiKey');
+  k.type = k.type === 'password' ? 'text' : 'password';
+  event.target.textContent = k.type === 'password' ? 'show' : 'hide';
+}
+function handlePhoto(e) {
+  const file = e.target.files[0]; if (!file) return;
+  const reader = new FileReader();
+  reader.onload = ev => {
+    document.getElementById('photoPreview').src = ev.target.result;
+    document.getElementById('photoPreview').style.display = 'block';
+    document.getElementById('photoUploadText').style.display = 'none';
+    document.getElementById('browserBgPhoto').src = ev.target.result;
+    document.getElementById('browserBgPhoto').style.display = 'block';
+  };
+  reader.readAsDataURL(file);
+}
+function setStatus(msg, type='') {
+  const el = document.getElementById('statusMsg');
+  el.textContent = msg; el.className = 'status-msg ' + type;
+}
+function showShimmer() {
+  const el = document.getElementById('postcardMessage');
+  el.className = 'postcard-message';
+  el.innerHTML = '<div class="shimmer" style="width:92%"></div><div class="shimmer" style="width:76%"></div><div class="shimmer" style="width:86%"></div><div class="shimmer" style="width:60%"></div>';
+}
+function getSignoff() { return document.getElementById('signoffName').value.trim() || 'Elishba'; }
+function getRecipientName() { return document.getElementById('recipientName').value.trim() || document.getElementById('contactSearch').value.trim() || 'Friend'; }
+function getRecipientEmail() { return document.getElementById('recipientEmail').value.trim() || document.getElementById('contactSearch').value.trim(); }
+
+// ── POLISH ──
+async function generate() {
+  const apiKey = document.getElementById('apiKey').value.trim();
+  const rawNote = document.getElementById('rawNote').value.trim();
+  if (!apiKey) { setStatus('add your Anthropic API key first', 'error'); return; }
+  if (!rawNote) { setStatus('write or speak a note first', 'error'); return; }
+
+  const btn = document.getElementById('generateBtn');
+  btn.disabled = true; btn.textContent = '✦ polishing...';
+  showShimmer(); setStatus('Claude is reading your note...');
+
+  const prompt = `You are helping someone write a heartfelt farewell note to a friend from their MBA program. They are leaving to move back to Pakistan after graduating from Haas (UC Berkeley).
+
+The recipient's name is: ${getRecipientName()}
+
+Here is their raw, scrappy voice note — messy, unfiltered, real:
+"${rawNote}"
+
+Rewrite this as a short, emotionally resonant farewell note. Rules:
+- 3–5 sentences maximum. Concise but meaningful.
+- Keep it warm, personal, real — use specific details from their note
+- Sound like a human wrote it late at night, not an AI
+- Do NOT start with "Dear" or any greeting — dive straight in
+- Do NOT include a sign-off or name at the end
+- Do NOT use em-dashes excessively
+- Capture the specific memory or feeling they mentioned
+- Leave them wanting to respond
+
+Return ONLY the message text, nothing else.`;
+
+  try {
+    const res = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'x-api-key': apiKey, 'anthropic-version': '2023-06-01', 'anthropic-dangerous-direct-browser-access': 'true' },
+      body: JSON.stringify({ model: 'claude-sonnet-4-20250514', max_tokens: 300, messages: [{ role: 'user', content: prompt }] })
+    });
+    if (!res.ok) { const e = await res.json(); throw new Error(e.error?.message || 'API error'); }
+    const data = await res.json();
+    generatedMessage = data.content[0].text.trim();
+    const msgEl = document.getElementById('postcardMessage');
+    msgEl.className = 'postcard-message'; msgEl.textContent = generatedMessage;
+    document.getElementById('actionRow').style.display = 'grid';
+    setStatus('✓ ready to send', 'success');
+  } catch(err) {
+    setStatus('error: ' + err.message, 'error');
+    document.getElementById('postcardMessage').className = 'postcard-message empty';
+    document.getElementById('postcardMessage').textContent = 'something went wrong — check your API key';
+  }
+  btn.disabled = false; btn.innerHTML = '✦ polish with Claude';
+}
+
+// ── SEND AS IS ──
+function sendRaw() {
+  const raw = document.getElementById('rawNote').value.trim();
+  if (!raw) { setStatus('write or speak a note first', 'error'); return; }
+  generatedMessage = raw;
+  document.getElementById('postcardMessage').className = 'postcard-message';
+  document.getElementById('postcardMessage').textContent = raw;
+  document.getElementById('actionRow').style.display = 'grid';
+  setStatus('ready to send as-is', 'success');
+}
+
+// ── SEND ──
+function sendGmail() {
+  if (!generatedMessage) { setStatus('generate or write a note first', 'error'); return; }
+  const signoff = getSignoff();
+  const subject = encodeURIComponent(`a note from ${signoff}, before I go`);
+  const body = encodeURIComponent(generatedMessage + '\n\n— ' + signoff);
+  window.open(`https://mail.google.com/mail/?view=cm&to=${encodeURIComponent(getRecipientEmail())}&su=${subject}&body=${body}`, '_blank');
+}
+function copyPlain() {
+  if (!generatedMessage) { setStatus('generate or write a note first', 'error'); return; }
+  navigator.clipboard.writeText(generatedMessage + '\n\n— ' + getSignoff()).then(() => {
+    setStatus('✓ copied — paste into WhatsApp', 'success');
+  });
+}
+
+// ── MIC ──
+function toggleMic() {
+  if (!('webkitSpeechRecognition' in window) && !('SpeechRecognition' in window)) {
+    setStatus('use Chrome for voice input, or press Fn+Fn on Mac', 'error'); return;
+  }
+  if (isRecording) { recognition?.stop(); return; }
+  const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+  recognition = new SR();
+  recognition.continuous = true; recognition.interimResults = true; recognition.lang = 'en-US';
+  const textarea = document.getElementById('rawNote');
+  const existing = textarea.value;
+  recognition.onstart = () => { isRecording = true; document.getElementById('micBtn').classList.add('recording'); setStatus('listening... tap mic to stop'); };
+  recognition.onresult = (e) => {
+    let final = existing, interim = '';
+    for (let i = e.resultIndex; i < e.results.length; i++) {
+      if (e.results[i].isFinal) final += e.results[i][0].transcript + ' ';
+      else interim += e.results[i][0].transcript;
+    }
+    textarea.value = final + interim;
+  };
+  recognition.onend = () => { isRecording = false; document.getElementById('micBtn').classList.remove('recording'); setStatus(''); };
+  recognition.onerror = (e) => { setStatus('mic error: ' + e.error, 'error'); isRecording = false; document.getElementById('micBtn').classList.remove('recording'); };
+  recognition.start();
+}
+</script>
+</body>
+</html>
