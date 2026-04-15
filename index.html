@@ -178,7 +178,8 @@ input:focus, textarea:focus { border-color: var(--coral); background: white; }
 .browser-body { background: var(--cream); padding: 1.6rem 1.8rem 1.8rem; position: relative; min-height: 280px; }
 .browser-bg-photo { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; opacity: 0.12; display: none; }
 .postcard-heading { font-family: 'Dancing Script', cursive; font-size: 2.6rem; color: var(--brown); margin-bottom: 1.2rem; }
-.postcard-message { font-family: 'Courier Prime', monospace; font-size: 0.9rem; color: var(--text-dark); line-height: 1.8; min-height: 90px; }
+.postcard-message { font-family: 'Courier Prime', monospace; font-size: 0.9rem; color: var(--text-dark); line-height: 1.8; min-height: 90px; outline: none; border-radius: 6px; transition: background 0.2s; }
+.postcard-message:focus { background: rgba(0,0,0,0.03); }
 .postcard-message.empty { color: #ccc; font-style: italic; }
 .postcard-footer { display: flex; justify-content: space-between; align-items: flex-end; margin-top: 1.6rem; }
 .postcard-signoff { font-family: 'Dancing Script', cursive; font-size: 1.4rem; color: var(--brown); }
@@ -349,7 +350,7 @@ input:focus, textarea:focus { border-color: var(--coral); background: white; }
         <div class="browser-body">
           <img id="browserBgPhoto" class="browser-bg-photo" alt="">
           <div class="postcard-heading">before I go</div>
-          <div class="postcard-message empty" id="postcardMessage">your polished note will appear here...</div>
+          <div class="postcard-message empty" id="postcardMessage" contenteditable="true" spellcheck="true" data-placeholder="your polished note will appear here...">your polished note will appear here...</div>
           <div class="postcard-footer">
             <div class="postcard-signoff" id="postcardSignoff">— Elishba</div>
           </div>
@@ -554,24 +555,26 @@ async function generate() {
   btn.disabled = true; btn.textContent = '✦ polishing...';
   showShimmer(); setStatus('Claude is reading your note...');
 
-  const prompt = `You are helping someone write a heartfelt farewell note to a friend from their MBA program. They are leaving to move back to Pakistan after graduating from Haas (UC Berkeley).
+  const prompt = `You are helping someone write a deeply personal farewell note to a friend from their MBA program at Haas, UC Berkeley. They are moving back to Pakistan after graduating and want to leave behind something that will actually mean something.
 
 The recipient's name is: ${getRecipientName()}
 
-Here is their raw, scrappy voice note — messy, unfiltered, real:
+Here is their raw voice note — they tend to ramble, so not everything needs to make it in. Your job is to find the emotional core:
 "${rawNote}"
 
-Rewrite this as a short, emotionally resonant farewell note. Rules:
-- 3–5 sentences maximum. Concise but meaningful.
-- Keep it warm, personal, real — use specific details from their note
-- Sound like a human wrote it late at night, not an AI
-- Do NOT start with "Dear" or any greeting — dive straight in
-- Do NOT include a sign-off or name at the end
-- Do NOT use em-dashes excessively
-- Capture the specific memory or feeling they mentioned
-- Leave them wanting to respond
+Write a farewell note that:
+- Is 3–4 sentences. Short enough to feel intentional, long enough to feel real.
+- Leads with the feeling, not the facts. What will they actually miss? What did this person mean to them?
+- Uses ONE specific detail or memory from what they said — the kind of detail only they would know
+- Sounds like it was written by a real person, not summarised by an AI. No corporate warmth, no hollow affirmations.
+- Does NOT start with "Dear" or the person's name
+- Does NOT end with a sign-off
+- Does NOT use em-dashes more than once
+- Is NOT transactional or practical — this is about human connection, not accomplishments
 
-Return ONLY the message text, nothing else.`;
+Ignore any filler or rambling. Find the heart of what they actually feel and write that.
+
+Return ONLY the note text, nothing else.`;
 
   try {
     const res = await fetch('https://api.anthropic.com/v1/messages', {
@@ -583,9 +586,12 @@ Return ONLY the message text, nothing else.`;
     const data = await res.json();
     generatedMessage = data.content[0].text.trim();
     const msgEl = document.getElementById('postcardMessage');
-    msgEl.className = 'postcard-message'; msgEl.textContent = generatedMessage;
+    msgEl.className = 'postcard-message';
+    msgEl.textContent = generatedMessage;
+    // sync any manual edits back to generatedMessage before sending
+    msgEl.oninput = () => { generatedMessage = msgEl.innerText.trim(); };
     document.getElementById('actionRow').style.display = 'grid';
-    setStatus('✓ ready to send', 'success');
+    setStatus('✓ ready — edit directly on the postcard if you want', 'success');
   } catch(err) {
     setStatus('error: ' + err.message, 'error');
     document.getElementById('postcardMessage').className = 'postcard-message empty';
@@ -599,23 +605,27 @@ function sendRaw() {
   const raw = document.getElementById('rawNote').value.trim();
   if (!raw) { setStatus('write or speak a note first', 'error'); return; }
   generatedMessage = raw;
-  document.getElementById('postcardMessage').className = 'postcard-message';
-  document.getElementById('postcardMessage').textContent = raw;
+  const msgEl = document.getElementById('postcardMessage');
+  msgEl.className = 'postcard-message';
+  msgEl.textContent = raw;
+  msgEl.oninput = () => { generatedMessage = msgEl.innerText.trim(); };
   document.getElementById('actionRow').style.display = 'grid';
-  setStatus('ready to send as-is', 'success');
+  setStatus('ready to send as-is — edit on the postcard if you want', 'success');
 }
 
 // ── SEND ──
 function sendGmail() {
-  if (!generatedMessage) { setStatus('generate or write a note first', 'error'); return; }
+  const liveText = document.getElementById('postcardMessage').innerText.trim();
+  if (!liveText || liveText === 'your polished note will appear here...') { setStatus('generate or write a note first', 'error'); return; }
   const signoff = getSignoff();
   const subject = encodeURIComponent(`a note from ${signoff}, before I go`);
-  const body = encodeURIComponent(generatedMessage + '\n\n— ' + signoff);
+  const body = encodeURIComponent(liveText + '\n\n— ' + signoff);
   window.open(`https://mail.google.com/mail/?view=cm&to=${encodeURIComponent(getRecipientEmail())}&su=${subject}&body=${body}`, '_blank');
 }
 function copyPlain() {
-  if (!generatedMessage) { setStatus('generate or write a note first', 'error'); return; }
-  navigator.clipboard.writeText(generatedMessage + '\n\n— ' + getSignoff()).then(() => {
+  const liveText = document.getElementById('postcardMessage').innerText.trim();
+  if (!liveText || liveText === 'your polished note will appear here...') { setStatus('generate or write a note first', 'error'); return; }
+  navigator.clipboard.writeText(liveText + '\n\n— ' + getSignoff()).then(() => {
     setStatus('✓ copied — paste into WhatsApp', 'success');
   });
 }
