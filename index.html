@@ -92,7 +92,7 @@ input:focus, textarea:focus { border-color: var(--coral); background: white; }
 
 /* TEXTAREA + MIC */
 .textarea-wrap { position: relative; }
-.textarea-wrap textarea { padding-right: 44px; min-height: 130px; resize: vertical; line-height: 1.65; }
+.textarea-wrap textarea { padding-right: 44px; min-height: 130px; resize: none; line-height: 1.65; overflow-y: hidden; }
 .mic-btn-inline {
   position: absolute; right: 10px; bottom: 10px;
   width: 30px; height: 30px; border-radius: 50%;
@@ -243,7 +243,7 @@ input:focus, textarea:focus { border-color: var(--coral); background: white; }
     <div class="panel-section">
       <div class="section-label">Your note — type or tap the mic</div>
       <div class="textarea-wrap">
-        <textarea id="rawNote" placeholder="okay so like... we stayed up until 3am before finals eating chips and she kept making me laugh and i never would have passed without her..."></textarea>
+        <textarea id="rawNote" placeholder="okay so like... we stayed up until 3am before finals eating chips and she kept making me laugh and i never would have passed without her..." oninput="autoGrow(this)"></textarea>
         <button class="mic-btn-inline" id="micBtn" onclick="toggleMic()" title="tap to speak">
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
             <rect x="9" y="2" width="6" height="11" rx="3"/>
@@ -525,6 +525,11 @@ function handlePhoto(e) {
   };
   reader.readAsDataURL(file);
 }
+function autoGrow(el) {
+  el.style.height = 'auto';
+  el.style.height = (el.scrollHeight) + 'px';
+}
+
 function setStatus(msg, type='') {
   const el = document.getElementById('statusMsg');
   el.textContent = msg; el.className = 'status-msg ' + type;
@@ -634,6 +639,7 @@ function toggleMic() {
       else interim += e.results[i][0].transcript;
     }
     textarea.value = final + interim;
+    autoGrow(textarea);
   };
   recognition.onend = () => { isRecording = false; document.getElementById('micBtn').classList.remove('recording'); setStatus(''); };
   recognition.onerror = (e) => { setStatus('mic error: ' + e.error, 'error'); isRecording = false; document.getElementById('micBtn').classList.remove('recording'); };
