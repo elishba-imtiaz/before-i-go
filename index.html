@@ -6,6 +6,7 @@
 <title>Before I Go — Farewell Notes</title>
 <link href="https://fonts.googleapis.com/css2?family=Dancing+Script:wght@700&family=Courier+Prime:ital,wght@0,400;0,700;1,400&family=Lato:wght@300;400;700&display=swap" rel="stylesheet">
 <script src="https://accounts.google.com/gsi/client" async defer></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
 <style>
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
@@ -280,7 +281,8 @@ input:focus, textarea:focus { border-color: var(--coral); background: white; }
 
     <div class="action-row" id="actionRow" style="display:none">
       <button class="action-btn gmail" onclick="sendGmail()">send via Gmail</button>
-      <button class="action-btn" onclick="copyPlain()">copy for WhatsApp</button>
+      <button class="action-btn" onclick="copyPlain()">copy text for WhatsApp</button>
+      <button class="action-btn" id="copyImgBtn" onclick="copyPostcardImage()" style="grid-column: span 2;">📋 copy postcard as image → paste into Gmail</button>
     </div>
 
     <div class="status-msg" id="statusMsg"></div>
@@ -618,9 +620,56 @@ function sendGmail() {
   const liveText = document.getElementById('postcardMessage').innerText.trim();
   if (!liveText || liveText === 'your polished note will appear here...') { setStatus('generate or write a note first', 'error'); return; }
   const signoff = getSignoff();
-  const subject = encodeURIComponent(`a note from ${signoff}, before I go`);
+  const subject = encodeURIComponent(`before Haas ends`);
   const body = encodeURIComponent(liveText + '\n\n— ' + signoff);
   window.open(`https://mail.google.com/mail/?view=cm&to=${encodeURIComponent(getRecipientEmail())}&su=${subject}&body=${body}`, '_blank');
+}
+
+async function copyPostcardImage() {
+  const btn = document.getElementById('copyImgBtn');
+  const original = btn.textContent;
+  btn.textContent = '⏳ capturing...';
+  btn.disabled = true;
+
+  try {
+    const postcard = document.querySelector('.postcard-outer');
+    const canvas = await html2canvas(postcard, {
+      scale: 2,
+      useCORS: true,
+      backgroundColor: null,
+      logging: false
+    });
+
+    canvas.toBlob(async (blob) => {
+      try {
+        await navigator.clipboard.write([
+          new ClipboardItem({ 'image/png': blob })
+        ]);
+        btn.textContent = '✓ image copied — paste into Gmail!';
+        btn.style.borderColor = '#3b9c5a';
+        btn.style.color = '#3b9c5a';
+        setTimeout(() => {
+          btn.textContent = original;
+          btn.style.borderColor = '';
+          btn.style.color = '';
+          btn.disabled = false;
+        }, 3000);
+      } catch(e) {
+        // Fallback: download instead
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url; a.download = 'before-i-go-postcard.png';
+        a.click(); URL.revokeObjectURL(url);
+        setStatus('📥 saved to downloads — attach to your Gmail', 'success');
+        btn.textContent = original;
+        btn.disabled = false;
+      }
+    }, 'image/png');
+  } catch(err) {
+    setStatus('could not capture postcard: ' + err.message, 'error');
+    btn.textContent = original;
+    btn.disabled = false;
+  }
 }
 function copyPlain() {
   const liveText = document.getElementById('postcardMessage').innerText.trim();
