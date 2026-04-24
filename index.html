@@ -265,11 +265,13 @@ input:focus, textarea:focus { border-color: var(--coral); background: white; }
         </div>
         <div>
           <div class="section-label">Berkeley photo</div>
-          <div class="photo-upload">
+          <div class="photo-upload" id="photoUploadArea">
             <input type="file" id="photoInput" accept="image/*" onchange="handlePhoto(event)">
             <img id="photoPreview" class="photo-preview" alt="">
             <div class="photo-upload-text" id="photoUploadText">+ photo</div>
           </div>
+          <button class="key-toggle" id="removePhotoBtn" style="display:none; margin-top:4px;" onclick="removePhoto()">✕ remove</button>
+        </div>
         </div>
       </div>
     </div>
@@ -525,8 +527,20 @@ function handlePhoto(e) {
     document.getElementById('photoUploadText').style.display = 'none';
     document.getElementById('browserBgPhoto').src = ev.target.result;
     document.getElementById('browserBgPhoto').style.display = 'block';
+    document.getElementById('removePhotoBtn').style.display = 'inline';
+    document.getElementById('photoInput').disabled = true;
   };
   reader.readAsDataURL(file);
+}
+function removePhoto() {
+  document.getElementById('photoPreview').src = '';
+  document.getElementById('photoPreview').style.display = 'none';
+  document.getElementById('photoUploadText').style.display = 'block';
+  document.getElementById('browserBgPhoto').src = '';
+  document.getElementById('browserBgPhoto').style.display = 'none';
+  document.getElementById('removePhotoBtn').style.display = 'none';
+  document.getElementById('photoInput').value = '';
+  document.getElementById('photoInput').disabled = false;
 }
 function autoGrow(el) {
   el.style.height = 'auto';
